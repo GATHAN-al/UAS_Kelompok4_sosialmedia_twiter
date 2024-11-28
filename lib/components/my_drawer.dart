@@ -114,7 +114,7 @@ class MyDrawer extends StatelessWidget {
 
               MyDrawerTile(
                 title: "S U B S C R I P T I O N",
-                icon: Icons.settings,
+                icon: Icons.star,
                 onTap: () {
                   // pop menu drawer
                   Navigator.pop(context);
