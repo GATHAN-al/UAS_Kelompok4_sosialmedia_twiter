@@ -284,30 +284,40 @@ Future<List<UserProfile>> searchUsersByName(String searchQuery) async {
 }
 
 
-   // Send message with a timestamp
-  Future<void> sendMessage({
-    required String chatId,
-    required String senderId,
-    required String message,
-  }) async {
-    await _db.collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .add({
-        'text': message,
-        'senderId': senderId,
-        'timestamp': FieldValue.serverTimestamp(),
-      });
+  // Send message with a timestamp
+Future<void> sendMessage({
+  required String chatId,
+  required String senderId,
+  required String message,
+  String? imageUrl,
+}) async {
+  final messageData = {
+    'text': message,
+    'senderId': senderId,
+    'timestamp': FieldValue.serverTimestamp(),
+  };
+  
+  // Include imageUrl if provided
+  if (imageUrl != null && imageUrl.isNotEmpty) {
+    messageData['imageUrl'] = imageUrl;
   }
+
+  await _db.collection('chats')
+    .doc(chatId)
+    .collection('messages')
+    .add(messageData);
+}
+
 
   // Fetch chat messages ordered by timestamp
   Stream<List<Map<String, dynamic>>> getMessages(String chatId) {
-    return _db.collection('chats')
-      .doc(chatId)
-      .collection('messages')
-      .orderBy('timestamp', descending: true)
-      .snapshots()
-      .map((snapshot) => snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
+    return _db
+        .collection('chats')
+        .doc(chatId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) => doc.data() as Map<String, dynamic>).toList());
   }
 
   // Get user's name by uid
@@ -320,21 +330,22 @@ Future<List<UserProfile>> searchUsersByName(String searchQuery) async {
       return 'Unknown';
     }
   }
-  //search users by name
-  Future<List<UserProfile>> searchUsersInFirebase (String searchTerm) async {
-    try{
+
+  // Search users by name
+  Future<List<UserProfile>> searchUsersInFirebase(String searchTerm) async {
+    try {
       QuerySnapshot snapshot = await _db
-      .collection("Users")
-      .where('username', isGreaterThanOrEqualTo: searchTerm)
-      .where('username',isLessThanOrEqualTo: '$searchTerm\uf8ff')
-      .get();
+          .collection("Users")
+          .where('username', isGreaterThanOrEqualTo: searchTerm)
+          .where('username', isLessThanOrEqualTo: '$searchTerm\uf8ff')
+          .get();
 
-      return snapshot.docs.map((doc)=>UserProfile.fromDocument(doc)).toList();
-
-    }
-    catch (e){
-      return[];
+      return snapshot.docs.map((doc) => UserProfile.fromDocument(doc)).toList();
+    } catch (e) {
+      print("Error searching users: $e");
+      return [];
     }
   }
 }
+
 
